@@ -1,0 +1,111 @@
+# ============================================================================
+#  TabICLv2 per SynthBridge
+#  Generazione di dati sintetici con il modello fondazionale tabellare TabICLv2,
+#  usato come stimatore delle distribuzioni condizionate (regola della catena).
+# ============================================================================
+
+name: "TabICLv2 · generazione autoregressiva"
+backend: python
+entry: adapter.py
+python_env: tabiclv2
+authors: ["Jingang Qu", "David Holzmüller", "Gaël Varoquaux", "Marine Le Morvan"]
+reference: "https://arxiv.org/abs/2602.11139"
+description:
+  it: |
+    **TabICLv2** (Qu et al., ICML 2026) è un modello fondazionale per dati tabellari,
+    pre-addestrato su milioni di dataset sintetici e usato senza addestramento
+    (*in-context learning*). Qui viene usato come **generatore**, tramite la classe
+    `TabICLUnsupervised` della libreria ufficiale `tabicl`: la distribuzione congiunta
+    è scomposta con la regola della catena, P(X) = P(X1) · P(X2 | X1) · … ,
+    e ogni colonna è campionata dalla distribuzione predittiva di TabICLv2
+    (classificatore per le categoriche, regressione a 999 quantili per le numeriche).
+
+    Per **bilanciare** un dataset indicate la colonna target e la classe minoritaria:
+    verranno generate solo righe di quella classe.
+
+    Limiti: le colonne vengono generate nell'ordine del dataset; al primo uso
+    vengono scaricati i pesi del modello da Hugging Face (serve internet);
+    su CPU può essere lento con molte colonne o molte righe di contesto.
+  en: |
+    **TabICLv2** (Qu et al., ICML 2026) is a tabular foundation model, pretrained on
+    millions of synthetic datasets and used without training (*in-context learning*).
+    Here it is used as a **generator**, through the `TabICLUnsupervised` class of the
+    official `tabicl` library: the joint distribution is factorised with the chain rule,
+    P(X) = P(X1) · P(X2 | X1) · … , and each column is sampled from TabICLv2's
+    predictive distribution (classifier for categorical columns, 999-quantile
+    regression for numerical ones).
+
+    To **balance** a dataset, set the target column and the minority class:
+    only rows of that class will be generated.
+
+    Limitations: columns are generated in the dataset order; model weights are
+    downloaded from Hugging Face on first use (internet required); it can be slow
+    on CPU with many columns or many context rows.
+
+params:
+  - name: target_column
+    label: {it: "Colonna target (facoltativa)", en: "Target column (optional)"}
+    type: string
+    default: ""
+    help:
+      it: "Nome della colonna della classe. Vuoto = genera dall'intero dataset."
+      en: "Name of the class column. Empty = generate from the whole dataset."
+
+  - name: target_class
+    label: {it: "Classe da generare (facoltativa)", en: "Class to generate (optional)"}
+    type: string
+    default: ""
+    help:
+      it: "Es. la classe minoritaria da sovracampionare. Vuoto = tutte le classi, con il target generato per primo."
+      en: "E.g. the minority class to oversample. Empty = all classes, with the target generated first."
+
+  - name: temperature
+    label: {it: "Temperatura", en: "Temperature"}
+    type: numeric
+    default: 1.0
+    min: 0.01
+    max: 5
+    step: 0.1
+    help:
+      it: "Valori più alti = dati più diversi ma meno fedeli; più bassi = più vicini alla moda."
+      en: "Higher = more diverse but less faithful data; lower = closer to the mode."
+
+  - name: n_estimators
+    label: {it: "Stimatori nell'ensemble", en: "Ensemble estimators"}
+    type: integer
+    default: 4
+    min: 1
+    max: 32
+    help:
+      it: "Predizioni mediate per ogni colonna (il paper usa 8). Più alto = più stabile ma più lento."
+      en: "Predictions averaged for each column (the paper uses 8). Higher = more stable but slower."
+
+  - name: max_context_rows
+    label: {it: "Righe reali di contesto (max)", en: "Real context rows (max)"}
+    type: integer
+    default: 3000
+    min: 50
+    max: 100000
+    advanced: true
+    help:
+      it: "Se il dataset è più grande, si usa un sottocampione casuale come contesto (più veloce)."
+      en: "If the dataset is larger, a random subsample is used as context (faster)."
+
+  - name: clip_to_range
+    label: {it: "Limita all'intervallo osservato", en: "Clip to observed range"}
+    type: logical
+    default: true
+    advanced: true
+    help:
+      it: "Riporta i valori numerici generati entro [min, max] dei dati reali."
+      en: "Clips generated numerical values to the [min, max] of the real data."
+
+  - name: device
+    label: {it: "Dispositivo", en: "Device"}
+    type: choice
+    choices: [auto, cpu, cuda, mps]
+    default: auto
+    advanced: true
+    help:
+      it: "auto sceglie la GPU se disponibile (CUDA, Apple MPS), altrimenti la CPU."
+      en: "auto picks the GPU if available (CUDA, Apple MPS), otherwise the CPU."

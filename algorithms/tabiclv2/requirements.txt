@@ -1,0 +1,7 @@
+# Libreria ufficiale di TabICLv2 (Qu et al., 2026): https://github.com/soda-inria/tabicl
+# Installa anche torch, scikit-learn, huggingface-hub.
+# Su Linux senza GPU, per una versione di torch più leggera (solo CPU),
+# aggiungere PRIMA di tabicl le due righe:
+#   --extra-index-url https://download.pytorch.org/whl/cpu
+#   torch
+tabicl==2.2.0
